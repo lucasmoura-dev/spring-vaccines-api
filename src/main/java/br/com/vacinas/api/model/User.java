@@ -10,9 +10,13 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.format.annotation.DateTimeFormat;
 
 @Entity
@@ -22,20 +26,21 @@ public class User {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
 
+    @NotEmpty(message = "O nome é obrigatório")
     private String name;
 
     @JsonFormat(pattern = "dd/MM/yyyy")
     @DateTimeFormat(pattern = "dd/MM/yyyy")
+    @NotNull(message = "A data de nascimento é obrigatório")
     private LocalDate birthDate;
     
+    @NotEmpty(message = "O e-mail é obrigatório")
     @Column(unique = true)
     private String mail; // unico
     
+    @NotEmpty(message = "O CPF é obrigatório")
     @Column(unique = true)
     private String cpf; // unico
-
-    @OneToMany(mappedBy = "user")
-    private Set<Vaccine> vaccines;
 
     public User() {
         

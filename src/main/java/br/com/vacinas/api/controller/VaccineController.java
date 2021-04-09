@@ -2,8 +2,9 @@ package br.com.vacinas.api.controller;
 
 import java.util.List;
 
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,10 +13,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.com.vacinas.api.exception.ResourceNotFoundException;
+import br.com.vacinas.api.exception.BadRequestException;
 import br.com.vacinas.api.model.Vaccine;
 import br.com.vacinas.api.repository.UserRepostory;
 import br.com.vacinas.api.repository.VaccineRepository;
@@ -25,6 +25,8 @@ import br.com.vacinas.api.repository.VaccineRepository;
 public class VaccineController {
     @Autowired
     VaccineRepository vaccineRepository;
+
+    @Autowired
     UserRepostory userRepostory;
 
     @GetMapping("/vaccines")
@@ -34,42 +36,42 @@ public class VaccineController {
     
     
     @PostMapping("/vaccines")
-    @ResponseStatus(code = HttpStatus.CREATED)
-    public ResponseEntity  createVaccine(@RequestBody Vaccine vaccine) {
-        if (vaccine.getUser() != null) {
-            return new ResponseEntity("User not found", HttpStatus.BAD_REQUEST);
-            //throw new ResourceNotFoundException("User", "id", vaccine.getUser().getId());
-        }
-        
-        vaccineRepository.save(vaccine);
+    public Vaccine  createVaccine(@Valid @RequestBody Vaccine vaccine) {
+        long userId = vaccine.getUser().getId();
 
-        return new ResponseEntity(HttpStatus.CREATED);
+        return userRepostory.findById(userId).map(user -> {
+            vaccine.setUser(user);
+            return vaccineRepository.save(vaccine);
+        }).orElseThrow(() -> new BadRequestException());
+
     }
 
     @GetMapping("/vaccines/{id}")
     public Vaccine getVaccineById(@PathVariable(value = "id") Long vaccineId) {
         return vaccineRepository.findById(vaccineId)
-            .orElseThrow(() -> new ResourceNotFoundException("Vaccine", "id", vaccineId));
+            .orElseThrow(() -> new BadRequestException());
     }
 
     @PutMapping("/vaccines/{id}")
-    public Vaccine updateUser(@PathVariable(value = "id") Long vaccineId, @RequestBody Vaccine vaccineDetails) {
+    public Vaccine updateVaccine(@PathVariable(value = "id") Long vaccineId, @Valid @RequestBody Vaccine vaccineDetails) {
         Vaccine vaccine = vaccineRepository.findById(vaccineId)
-            .orElseThrow(() -> new ResourceNotFoundException("Vaccine", "id", vaccineId));
-
+            .orElseThrow(() -> new BadRequestException());
 
         vaccine.setName(vaccineDetails.getName());
         vaccine.setUser(vaccineDetails.getUser());
         vaccine.setDate(vaccineDetails.getDate());
 
-        Vaccine updatedVaccine = vaccineRepository.save(vaccine);
-        return updatedVaccine;
+        long userId = vaccineDetails.getUser().getId();
+        return userRepostory.findById(userId).map(user -> {
+            vaccine.setUser(user);
+            return vaccineRepository.save(vaccine);
+        }).orElseThrow(() -> new BadRequestException());
     }
 
     @DeleteMapping("/vaccines/{id}")
     public ResponseEntity<?> deleteVaccine(@PathVariable(value = "id") Long vaccineId) {
         Vaccine vaccine = vaccineRepository.findById(vaccineId)
-            .orElseThrow(() -> new ResourceNotFoundException("User", "id", vaccineId));
+            .orElseThrow(() -> new BadRequestException());
 
         vaccineRepository.delete(vaccine);
 

@@ -1,9 +1,13 @@
 package br.com.vacinas.api.model;
 
 import javax.persistence.Table;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
@@ -22,14 +26,18 @@ public class Vaccine {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
     
+    @NotEmpty(message = "O nome da vacina é obrigatório")
     private String name;
 
     @JsonFormat(pattern = "dd/MM/yyyy")
     @DateTimeFormat(pattern = "dd/MM/yyyy")
+    @NotNull(message = "A data da vacina é obrigatório")
     private LocalDate date;
 
     @ManyToOne
+    @NotNull(message = "O id do usuário é obrigatório")
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
     public Vaccine() {
